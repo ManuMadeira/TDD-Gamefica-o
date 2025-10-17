@@ -3,22 +3,22 @@ using Gamification.Domain.Awards.Models;
 namespace Gamification.Domain.Awards.Ports;
 
 /// <summary>
-/// Port for writing award-related data (Command side)
+/// Porta para gravação de dados relacionados a premiações (lado Command)
 /// </summary>
 public interface IAwardsWriteStore
 {
     /// <summary>
-    /// Creates a new award
+    /// Cria uma nova premiação
     /// </summary>
     Task CreateAsync(Award award, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Updates an existing award
+    /// Atualiza uma premiação existente
     /// </summary>
     Task UpdateAsync(Award award, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Deletes an award by its identifier
+    /// Remove uma premiação pelo seu identificador
     /// </summary>
     Task DeleteAsync(Guid awardId, CancellationToken cancellationToken = default);
 }

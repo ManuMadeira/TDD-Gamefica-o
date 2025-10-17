@@ -1,37 +1,37 @@
 namespace Gamification.Domain.Awards.Ports;
 
 /// <summary>
-/// Unit of Work pattern for managing award-related operations atomically
+/// Padrão Unit of Work para gerenciar operações relacionadas a premiações de forma atômica
 /// </summary>
 public interface IAwardsUnitOfWork : IDisposable, IAsyncDisposable
 {
     /// <summary>
-    /// Repository for reading award data
+    /// Repositório para leitura de dados de premiações
     /// </summary>
     IAwardsReadStore ReadStore { get; }
 
     /// <summary>
-    /// Repository for writing award data
+    /// Repositório para gravação de dados de premiações
     /// </summary>
     IAwardsWriteStore WriteStore { get; }
 
     /// <summary>
-    /// Commits all changes made in this unit of work
+    /// Persiste todas as alterações realizadas nesta unidade de trabalho
     /// </summary>
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Begins a transaction
+    /// Inicia uma transação
     /// </summary>
     Task BeginTransactionAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Commits the current transaction
+    /// Confirma a transação atual
     /// </summary>
     Task CommitTransactionAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Rolls back the current transaction
+    /// Desfaz (rollback) a transação atual
     /// </summary>
     Task RollbackTransactionAsync(CancellationToken cancellationToken = default);
 }

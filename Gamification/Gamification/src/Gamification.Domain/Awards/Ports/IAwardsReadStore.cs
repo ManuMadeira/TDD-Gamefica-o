@@ -3,22 +3,22 @@ using Gamification.Domain.Awards.Models;
 namespace Gamification.Domain.Awards.Ports;
 
 /// <summary>
-/// Port for reading award-related data (Query side)
+/// Porta para leitura de dados relacionados a premiações (lado Query)
 /// </summary>
 public interface IAwardsReadStore
 {
     /// <summary>
-    /// Gets an award by its unique identifier
+    /// Obtém uma premiação pelo seu identificador único
     /// </summary>
     Task<Award?> GetByIdAsync(Guid awardId, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Gets all awards for a specific user
+    /// Obtém todas as premiações de um usuário específico
     /// </summary>
     Task<IReadOnlyList<Award>> GetByUserIdAsync(Guid userId, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Checks if an award exists for the given criteria
+    /// Verifica se uma premiação existe para o critério informado
     /// </summary>
     Task<bool> ExistsAsync(Guid awardId, CancellationToken cancellationToken = default);
 } 

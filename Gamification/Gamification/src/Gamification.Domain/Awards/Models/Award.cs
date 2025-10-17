@@ -1,7 +1,7 @@
 namespace Gamification.Domain.Awards.Models;
 
 /// <summary>
-/// Represents an award given to a user in the gamification system
+/// Representa uma premiação concedida a um usuário no sistema de gamificação
 /// </summary>
 public class Award
 {

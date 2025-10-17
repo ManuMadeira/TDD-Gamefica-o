@@ -1,5 +1,6 @@
 using FluentAssertions;
 using Gamification.Domain.Awards.Models;
+using Xunit;
 
 namespace Gamification.Domain.Tests.Awards.Models;
 
@@ -11,8 +12,8 @@ public class AwardTests
         // Arrange
         var id = Guid.NewGuid();
         var userId = Guid.NewGuid();
-        var type = "Badge";
-        var description = "First Achievement";
+    var type = "Badge"; // tipo mantido
+    var description = "Primeira Conquista";
         var points = 100;
 
         // Act

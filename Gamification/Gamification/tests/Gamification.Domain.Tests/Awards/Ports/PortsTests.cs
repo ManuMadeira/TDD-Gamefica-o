@@ -2,6 +2,7 @@ using FluentAssertions;
 using Gamification.Domain.Awards.Models;
 using Gamification.Domain.Awards.Ports;
 using Moq;
+using Xunit;
 
 namespace Gamification.Domain.Tests.Awards.Ports;
 
@@ -23,7 +24,7 @@ public class PortsTests
     {
         // Arrange
         var awardId = Guid.NewGuid();
-        var expectedAward = new Award(awardId, Guid.NewGuid(), "Badge", "Test", 100);
+        var expectedAward = new Award(awardId, Guid.NewGuid(), "Badge", "Teste", 100);
         
         _readStoreMock
             .Setup(x => x.GetByIdAsync(awardId, It.IsAny<CancellationToken>()))
@@ -40,7 +41,7 @@ public class PortsTests
     public async Task AwardsWriteStore_CreateAsync_ShouldCallCreateMethod()
     {
         // Arrange
-        var award = new Award(Guid.NewGuid(), Guid.NewGuid(), "Badge", "Test", 100);
+    var award = new Award(Guid.NewGuid(), Guid.NewGuid(), "Badge", "Teste", 100);
         
         _writeStoreMock
             .Setup(x => x.CreateAsync(award, It.IsAny<CancellationToken>()))
