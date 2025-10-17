@@ -17,6 +17,12 @@ public class Award
 
     public Award(Guid id, Guid userId, string type, string description, int points, DateTime? expiresAt = null)
     {
+        if (id == Guid.Empty) throw new ArgumentException("Id não pode ser vazio.", nameof(id));
+        if (userId == Guid.Empty) throw new ArgumentException("UserId não pode ser vazio.", nameof(userId));
+        if (string.IsNullOrWhiteSpace(type)) throw new ArgumentException("Type é obrigatório.", nameof(type));
+        if (description is null) throw new ArgumentNullException(nameof(description));
+        if (points < 0) throw new ArgumentOutOfRangeException(nameof(points), "Points não pode ser negativo.");
+
         Id = id;
         UserId = userId;
         Type = type;

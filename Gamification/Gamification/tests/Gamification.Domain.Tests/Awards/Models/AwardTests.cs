@@ -30,6 +30,37 @@ public class AwardTests
     }
 
     [Fact]
+    public void Constructor_ShouldThrow_OnEmptyId()
+    {
+        Action act = () => _ = new Award(Guid.Empty, Guid.NewGuid(), "Badge", "Desc", 10);
+        act.Should().Throw<ArgumentException>().Where(e => e.ParamName == "id");
+    }
+
+    [Fact]
+    public void Constructor_ShouldThrow_OnEmptyUserId()
+    {
+        Action act = () => _ = new Award(Guid.NewGuid(), Guid.Empty, "Badge", "Desc", 10);
+        act.Should().Throw<ArgumentException>().Where(e => e.ParamName == "userId");
+    }
+
+    [Fact]
+    public void Constructor_ShouldThrow_OnNullOrWhitespaceType()
+    {
+        Action act1 = () => _ = new Award(Guid.NewGuid(), Guid.NewGuid(), "", "Desc", 10);
+        Action act2 = () => _ = new Award(Guid.NewGuid(), Guid.NewGuid(), " ", "Desc", 10);
+
+        act1.Should().Throw<ArgumentException>().Where(e => e.ParamName == "type");
+        act2.Should().Throw<ArgumentException>().Where(e => e.ParamName == "type");
+    }
+
+    [Fact]
+    public void Constructor_ShouldThrow_OnNegativePoints()
+    {
+        Action act = () => _ = new Award(Guid.NewGuid(), Guid.NewGuid(), "Badge", "Desc", -5);
+        act.Should().Throw<ArgumentOutOfRangeException>().Where(e => e.ParamName == "points");
+    }
+
+    [Fact]
     public void IsExpired_WhenNoExpiration_ShouldReturnFalse()
     {
         // Arrange
