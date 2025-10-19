@@ -9,6 +9,7 @@ public class BonusPolicy
         DateTimeOffset bonusFullWeightEndDate,
         DateTimeOffset finalDate,
         int totalXp)
+        
     {
         if (bonusFullWeightEndDate > finalDate)
         {
@@ -19,7 +20,7 @@ public class BonusPolicy
         {
             return new BonusCalculationResult(totalXp, "Bônus integral concedido.");
         }
-        
+
         if (now > bonusFullWeightEndDate && now <= finalDate)
         {
             var reducedXp = totalXp / 2;
