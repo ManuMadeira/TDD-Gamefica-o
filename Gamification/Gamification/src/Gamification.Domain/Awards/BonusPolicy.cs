@@ -10,6 +10,7 @@ public class BonusPolicy
         DateTimeOffset finalDate,
         int totalXp)
     {
+        
         if (bonusFullWeightEndDate > finalDate)
         {
             throw new ArgumentException("A data final do bônus integral não pode ser posterior à data final geral.");
