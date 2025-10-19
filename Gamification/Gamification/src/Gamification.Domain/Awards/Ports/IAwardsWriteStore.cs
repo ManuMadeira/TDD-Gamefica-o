@@ -21,4 +21,7 @@ public interface IAwardsWriteStore
     /// Remove uma premiação pelo seu identificador
     /// </summary>
     Task DeleteAsync(Guid awardId, CancellationToken cancellationToken = default);
+
+    // IAwardsWriteStore.cs (adicionar)
+    Task CreateBadgeAwardAsync(BadgeAward badgeAward, Guid? requestId = null, CancellationToken ct = default);
 }
