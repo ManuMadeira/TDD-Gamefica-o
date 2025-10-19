@@ -19,12 +19,13 @@ public class BonusPolicy
         {
             return new BonusCalculationResult(totalXp, "Bônus integral concedido.");
         }
-
+        
         if (now > bonusFullWeightEndDate && now <= finalDate)
         {
             var reducedXp = totalXp / 2;
             return new BonusCalculationResult(reducedXp, "Bônus reduzido concedido.");
         }
+
         return new BonusCalculationResult(0, "Nenhum bônus aplicável.");
     }
 }
