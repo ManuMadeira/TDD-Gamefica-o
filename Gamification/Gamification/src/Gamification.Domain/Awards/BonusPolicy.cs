@@ -25,7 +25,6 @@ public class BonusPolicy
             var reducedXp = totalXp / 2;
             return new BonusCalculationResult(reducedXp, "Bônus reduzido concedido.");
         }
-
         return new BonusCalculationResult(0, "Nenhum bônus aplicável.");
     }
 }
