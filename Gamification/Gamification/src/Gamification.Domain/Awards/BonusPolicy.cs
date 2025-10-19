@@ -9,7 +9,6 @@ public class BonusPolicy
         DateTimeOffset bonusFullWeightEndDate,
         DateTimeOffset finalDate,
         int totalXp)
-        
     {
         if (bonusFullWeightEndDate > finalDate)
         {
