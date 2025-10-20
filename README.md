@@ -1,5 +1,6 @@
 # TDD-Gameficacao
 Repositório contendo a implementação parcial do módulo de Gamification (Awards) para atividade acadêmica.
+Emmanuelly Madeira, Habner Gabryel Correa, Lucca Vedovato, Joao Brandao, Leonardo Ferlin
 
 ## Visão geral
 Este projeto implementa o domínio de um sistema de gamificação em .NET 9. As mudanças recentes incluíram a criação de value objects, entidades, exceções de domínio e testes unitários.
