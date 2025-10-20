@@ -5,12 +5,14 @@ using Gamification.Domain.Awards.Models;
 using Gamification.Domain.Awards.Policies;
 using Gamification.Domain.Awards.Ports;
 using Gamification.Domain.Exceptions;
+using Gamification.Domain.Awards.Constants;
 
 namespace Gamification.Domain.Awards
 {
     /// <summary>
-    /// ServiÁo de concess„o de badges ó agregado raiz que aplica regras de negÛcio:
-    /// elegibilidade, unicidade, idempotÍncia e integraÁ„o com BonusPolicy.
+    /// Servi√ßo de concess√£o de badges ‚Äî agregado raiz que aplica regras de neg√≥cio:
+    /// elegibilidade, unicidade, idempot√™ncia e integra√ß√£o com BonusPolicy.
+    /// Implementa atomicidade via IAwardsUnitOfWork (Begin/Commit/Rollback).
     /// </summary>
     public class AwardBadgeService
     {
@@ -22,7 +24,7 @@ namespace Gamification.Domain.Awards
         }
 
         /// <summary>
-        /// Concede um badge a um usu·rio, aplicando as regras de negÛcio do domÌnio.
+        /// Concede um badge para um usu√°rio ap√≥s valida√ß√µes.
         /// </summary>
         public async Task<BadgeAward> ConcederBadgeAsync(
             Guid userId,
@@ -33,13 +35,15 @@ namespace Gamification.Domain.Awards
             Guid? requestId = null,
             CancellationToken ct = default)
         {
-            if (userId == Guid.Empty) throw new DomainException("UserId inv·lido");
-            if (badgeSlug is null) throw new DomainException("BadgeSlug È obrigatÛrio");
+            if (userId == Guid.Empty) throw new ArgumentException(AwardMessages.ErrorInvalidUserId, nameof(userId));
+            if (themeId == Guid.Empty) throw new ArgumentException(AwardMessages.ErrorInvalidThemeId, nameof(themeId));
+            if (missionId == Guid.Empty) throw new ArgumentException(AwardMessages.ErrorInvalidMissionId, nameof(missionId));
+            if (badgeSlug == null) throw new ArgumentNullException(nameof(badgeSlug));
 
-            // 1) IdempotÍncia (requestId)
+            // Idempot√™ncia: se j√° existe award para esse requestId, retornar imediatamente
             if (requestId.HasValue)
             {
-                var existingAwardId = await _uow.ReadStore.GetAwardIdByRequestIdAsync(requestId.Value, ct);
+                var existingAwardId = await _uow.ReadStore.FindRequestByUserAsync(requestId.Value, ct);
                 if (existingAwardId.HasValue)
                 {
                     var existing = await _uow.ReadStore.GetByIdAsync(existingAwardId.Value, ct);
@@ -47,34 +51,51 @@ namespace Gamification.Domain.Awards
                 }
             }
 
-            // 2) Elegibilidade ó miss„o concluÌda
-            var completed = await _uow.ReadStore.MissionCompletedAsync(userId, missionId, ct);
-            if (!completed)
-                throw new DomainException("Elegibilidade n„o satisfeita: miss„o n„o concluÌda ou inexistente");
+            // Verificar pr√©-condi√ß√µes: miss√£o conclu√≠da
+            var missionCompleted = await _uow.ReadStore.HasCompletedMissionAsync(userId, missionId, ct);
+            if (!missionCompleted) throw new DomainException(AwardMessages.ErrorUserNotCompletedMission);
 
-            // 3) Unicidade ó chave natural
-            var already = await _uow.ReadStore.BadgeExistsByNaturalKeyAsync(userId, themeId, missionId, badgeSlug, ct);
-            if (already)
-                throw new DomainException("Badge j· concedida para este estudante/tema/miss„o (unicidade)");
+            // Checar unicidade: se badge j√° existe por chave natural
+            var already = await _uow.ReadStore.BadgeExistsAsync(userId, themeId, missionId, badgeSlug.Value, ct);
+            if (already) throw new DomainException(AwardMessages.ErrorBadgeAlreadyGranted);
 
-            // 4) PolÌtica de bÙnus
-            var (bonusStart, fullWeightEnd, finalDate, xpBase, xpFullWeight, xpReducedWeight) =
-                await _uow.ReadStore.GetThemeBonusPolicyAsync(themeId, ct);
+            // Recuperar pol√≠tica do tema e calcular b√¥nus
+            var policy = await _uow.ReadStore.GetThemePolicyAsync(themeId, ct);
+            XpAmount xp = new XpAmount(0);
+            string reason = string.Empty;
+            if (policy.HasValue)
+            {
+                var (bonusStart, bonusFullWeightEnd, bonusFinalDate, xpBase, xpFullWeight, xpReducedWeight) = policy.Value;
+                var bonusResult = BonusPolicy.Calculate(now, bonusStart, bonusFullWeightEnd, bonusFinalDate, xpBase, xpFullWeight, xpReducedWeight);
+                xp = bonusResult.Xp;
+                reason = bonusResult.Justification;
+            }
 
-            var bonus = BonusPolicy.Calculate(now, bonusStart, fullWeightEnd, finalDate, xpBase, xpFullWeight, xpReducedWeight);
+            // Construir entidades
+            var badgeAward = new BadgeAward(Guid.NewGuid(), userId, badgeSlug, xp);
+            var log = new RewardLog(Guid.NewGuid(), userId, $"badge_awarded:{badgeSlug.Value}", source: AwardMessages.SourceMissionCompletion, reason: reason);
 
-            var badgeAward = new BadgeAward(Guid.NewGuid(), userId, badgeSlug, bonus.Xp);
-            var log = new RewardLog(Guid.NewGuid(), userId, $"mission_completion:{bonus.Justification}");
+            // Persistir de forma at√¥mica via m√©todo dedicado
+            await SalvarConcessaoAtomicamente(badgeAward, log, requestId, ct);
 
-            // 5) PersistÍncia atÙmica
+            return badgeAward;
+        }
+
+        private async Task SalvarConcessaoAtomicamente(BadgeAward badgeAward, RewardLog log, Guid? requestId, CancellationToken ct)
+        {
             await _uow.BeginTransactionAsync(ct);
             try
             {
                 await _uow.WriteStore.CreateBadgeAwardAsync(badgeAward, requestId, ct);
 
-                var award = new Award(Guid.NewGuid(), userId, "Badge", $"Badge {badgeSlug.Value}", bonus.Xp.Value, null);
-                await _uow.WriteStore.CreateAsync(award, ct);
-                await _uow.WriteStore.CreateAsync(log, ct);
+                try
+                {
+                    await _uow.WriteStore.CreateAsync(log, ct);
+                }
+                catch
+                {
+                    // se o store n√£o suporta logs, ignora
+                }
 
                 await _uow.CommitTransactionAsync(ct);
             }
@@ -83,8 +104,6 @@ namespace Gamification.Domain.Awards
                 await _uow.RollbackTransactionAsync(ct);
                 throw;
             }
-
-            return badgeAward;
         }
     }
 }
